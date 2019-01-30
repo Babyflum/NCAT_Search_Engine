@@ -3,9 +3,9 @@ This program takes the input from the search box and checks if any mistakes were
 Illegal queries include:
 - Parentheses that were opened were not closed. (u"\u2713")
 - Two or more operators next to each other with no search word in between. (u"\u2713")
-- Operators right of opening parentheses. (w1 AND(w1..)) works but (w1 (AND w2)..) does not.
+- Operators right of opening parentheses. (w1 AND(w1..)) works but (w1 (AND w2)..) does not. (u"\u2713")
 - Search tokens left of closing parentheses.
-- Exact phrase quotation marks open but do not close.
+- Exact phrase quotation marks open but do not close. (u"\u2713")
 - Operators within an exact phrase (this might be updated in later versions).
 - WITHIN and NEAR operators without a distance number or with a distance number of more than 3 digits.
 - Empty query.
@@ -104,11 +104,57 @@ def word_parentheses(input_string):
     >>> word_parentheses('w OR w ( w AND w)w')
     False
     """
-    op_re1 = r'\&|\||AND|OR|BUT\sNOT|NOT|\~|\,|NEAR\d{1,3}|WITHIN\d{1,3}|\s'
-    wopa_re = re.compile('' % (op_re1, op_re1))
+    # incomplete
+    input_string = '  ' + input_string + '  '
+    op_re1 = r'((?<!AND)(?<!OR)(?<!NOT)(?<!NEAR\d)(?<!NEAR\d\d)' \
+             r'(?<!NEAR\d\d\d)(?<!WITHIN\d)(?<!WITHIN\d\d)(?<!WITHIN\d\d\d)(?<!\s\s))'
+    op_re2 = r'((?!AND)(?!OR)(?!NOT)(?!NEAR\d)(?!NEAR\d\d)' \
+             r'(?!NEAR\d\d\d)(?!WITHIN\d)(?!WITHIN\d\d)(?!WITHIN\d\d\d)(?!\s\s))'
+    wopa_re = re.compile('%s\s*\(|\)\s*%s' % (op_re1, op_re2))
     if re.search(wopa_re, input_string) is None:
         return True
     else:
+        return False
+
+
+def quotation_marks(input_string):
+    """
+    This function checks if all opening quotation marks also close.
+    :param input_string: raw input string.
+    :return: Boolean
+    >>> quotation_marks('"w w" OR "w w w" AND "w w w"')
+    True
+    >>> quotation_marks('"w w" OR "w w w" AND "w w')
+    False
+    """
+    qcounter = 0
+    for char in input_string:
+        if char == '"':
+            qcounter += 1
+    if qcounter % 2 != 0:
+        return False
+    else:
+        return True
+
+
+def exact_phrase_operators(input_string):
+    """
+    This function checks if there are any operators within quotation marks.
+    :param input_string: raw input string.
+    :return: Boolean.
+    >>> exact_phrase_operators('w AND w OR "w w w" NOT "w w"')
+    True
+    >>> exact_phrase_operators('w AND w OR "w NOT w"')
+    False
+    >>> exact_phrase_operators('w AND w OR "w WITHIN345 w"')
+    False
+    """
+    op_re1 = r'\&|\||AND|OR|BUT\sNOT|NOT|\~|\,|NEAR\d{1,3}|WITHIN\d{1,3}'
+    regex = re.compile(r'(".*(\&|\||AND|OR|BUT\sNOT|NOT|\~|\,|NEAR\d{1,3}|WITHIN\d{1,3}).*")*?')
+    if re.search(regex, input_string) is None:
+        return True
+    else:
+        print(re.search(regex, input_string))
         return False
 
 
