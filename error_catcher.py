@@ -1,71 +1,49 @@
-'''
-Program that takes the unaltered query and checks whether the preprocessor
-can  clean it up, i.e. whether the query is legal.
-'''
+"""
+This program takes the input from the search box and checks if any mistakes were made.
+Illegal queries include:
+- Parentheses that were opened were not closed.
+- Two or more operators next to each other with no search word in between.
+- Exact phrase quotation marks open but do not close.
+- Operators within an exact phrase (this might be updated in later versions).
+- WITHIN and NEAR operators without a distance number or with a distance number of more than 3 digits.
+- Empty query.
+"""
+
 import re
 import doctest
 
-def empty_query(query):
-    '''
-    Tests for empty query or query containing only whitespaces.
-    >>> empty_query("")
-    False
-    >>> empty_query("   ")
-    False
-    >>> empty_query("  sad ")
+
+def check_parentheses(input_string):
+    """
+    This function checks whether all opening parentheses have corresponding closing parentheses.
+    :param input_string: raw input string.
+    :return: Boolean.
+    >>> check_parentheses('w (w w) w ((w(w w)w) w )')
     True
-    '''
-    pattern = re.compile("\s+")
-    if query == "" or pattern.fullmatch(query):
+    >>> check_parentheses('w (w w) w ((w(w ww) w )')
+    False
+    >>> check_parentheses('w w w) w ((w(w w)w) w )')
+    False
+    """
+    pcounter = 0
+    for char in input_string:
+        if char == '(':
+            pcounter += 1
+        elif char == ')':
+            pcounter -= 1
+    if pcounter != 0:
         return False
     else:
         return True
 
-def empty_parentheses(query):
-    '''
-    Tests whether there are parentheses with no content.
-    >>> empty_parentheses("word1 AND () word2")
-    False
-    >>> empty_parentheses("word1 AND (   )")
-    False
-    >>> empty_parentheses("word1 AND (word2 AND word3)")
-    True
-    '''
-    if "(" or ")" in query:
-        pattern = re.compile("\((\s+|)\)")
-        if pattern.search(query):
-            return False
-        else:
-            return True
-    else:
-        return True
 
-def operator_uniqueness(query):
-    '''
-    Returns False when operator groups are mixed.
-    There are three operator groups.
-    1. AND, OR, BUT NOT
-    2. &, |, ~
-    3. one whitespace, standing for AND; one comma standing for OR
-    >>> operator_uniqueness("word1 AND word2 word3")
-    False
-    >>> operator_uniqueness("word1 & word2 OR word3")
-    False
-    >>> operator_uniqueness("word1, word2 | word3")
-    False
-    >>> operator_uniqueness("word1, word2 word3")
-    True
-    >>> operator_uniqueness("word1 AND word2 BUT NOT word3")
-    True
-    '''
-    pattern = re.compile("()")
-
-def run(query):
-    '''
-    Main function which runs all other functions sequentially, returning
-    either False, if one of the tests does not pass or True, if it does.
-    '''
+def run(input_string):
+    """
+    This function takes the input string and runs all tests.
+    :param input_string: Raw input string from search box.
+    :return: Error message.
+    """
     pass
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     doctest.testmod()
