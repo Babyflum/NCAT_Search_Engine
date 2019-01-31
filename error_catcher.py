@@ -15,16 +15,16 @@ import re
 import doctest
 
 
-def empty_query(input_string):
+def query_is_empty(input_string):
     """
     This function checks whether the query is empty.
     :param input_string: raw input string.
     :return: Boolean.
-    >>> empty_query('w AND w')
+    >>> query_is_empty('w AND w')
     True
-    >>> empty_query('')
+    >>> query_is_empty('')
     False
-    >>> empty_query('  ')
+    >>> query_is_empty('  ')
     False
     """
     if re.match(r'\A\s*\Z', input_string) is None:
@@ -33,16 +33,16 @@ def empty_query(input_string):
         return False
 
 
-def check_parentheses(input_string):
+def parentheses_are_uneven(input_string):
     """
     This function checks whether all opening parentheses have corresponding closing parentheses.
     :param input_string: raw input string.
     :return: Boolean.
-    >>> check_parentheses('w (w w) w ((w(w w)w) w )')
+    >>> parentheses_are_uneven('w (w w) w ((w(w w)w) w )')
     True
-    >>> check_parentheses('w (w w) w ((w(w ww) w )')
+    >>> parentheses_are_uneven('w (w w) w ((w(w ww) w )')
     False
-    >>> check_parentheses('w w w) w ((w(w w)w) w )')
+    >>> parentheses_are_uneven('w w w) w ((w(w w)w) w )')
     False
     """
     pcounter = 0
@@ -57,20 +57,20 @@ def check_parentheses(input_string):
         return True
 
 
-def operator_neighbors(input_string):
+def operators_with_no_words_in_between(input_string):
     """
     This function checks whether operators are separated by words.
     :param input_string: raw input string
     :return: Boolean.
-    >>> operator_neighbors('w AND w OR w WITHIN3 (w BUT NOT w) NEAR756 w ~ w, w|w')
+    >>> operators_with_no_words_in_between('w AND w OR w WITHIN3 (w BUT NOT w) NEAR756 w ~ w, w|w')
     True
-    >>> operator_neighbors('w AND AND w')
+    >>> operators_with_no_words_in_between('w AND AND w')
     False
-    >>> operator_neighbors('w AND w ~ | w')
+    >>> operators_with_no_words_in_between('w AND w ~ | w')
     False
-    >>> operator_neighbors('w & w &NEAR76')
+    >>> operators_with_no_words_in_between('w & w &NEAR76')
     False
-    >>> operator_neighbors('w WITHIN5 NOT w')
+    >>> operators_with_no_words_in_between('w WITHIN5 NOT w')
     False
     """
     op_re1 = r'\&|\||AND|OR|BUT\sNOT|NOT|\~|\,|NEAR\d{1,3}|WITHIN\d{1,3}'
@@ -81,20 +81,20 @@ def operator_neighbors(input_string):
         return False
 
 
-def operator_parentheses(input_string):
+def operator_following_opening_parenthesis_or_before_closing_parenthesis(input_string):
     """
     This function checks if an operator follows an opening parenthesis or precedes a closing parenthesis.
     :param input_string: raw input string.
     :return: Boolean.
-    >>> operator_parentheses('w AND (w OR w)')
+    >>> operator_following_opening_parenthesis_or_before_closing_parenthesis('w AND (w OR w)')
     True
-    >>> operator_parentheses('w AND (AND word)')
+    >>> operator_following_opening_parenthesis_or_before_closing_parenthesis('w AND (AND word)')
     False
-    >>> operator_parentheses('w AND ( AND word)')
+    >>> operator_following_opening_parenthesis_or_before_closing_parenthesis('w AND ( AND word)')
     False
-    >>> operator_parentheses('w AND (w AND)')
+    >>> operator_following_opening_parenthesis_or_before_closing_parenthesis('w AND (w AND)')
     False
-    >>> operator_parentheses('w AND (w AND )')
+    >>> operator_following_opening_parenthesis_or_before_closing_parenthesis('w AND (w AND )')
     False
     """
     op_re1 = r'\&|\||AND|OR|BUT\sNOT|NOT|\~|\,|NEAR\d{1,3}|WITHIN\d{1,3}'
@@ -135,14 +135,14 @@ def operator_parentheses(input_string):
 #     #     return False
 #     pass
 
-def quotation_marks(input_string):
+def quotation_marks_are_uneven(input_string):
     """
     This function checks if all opening quotation marks also close.
     :param input_string: raw input string.
     :return: Boolean
-    >>> quotation_marks('"w w" OR "w w w" AND "w w w"')
+    >>> quotation_marks_are_uneven('"w w" OR "w w w" AND "w w w"')
     True
-    >>> quotation_marks('"w w" OR "w w w" AND "w w')
+    >>> quotation_marks_are_uneven('"w w" OR "w w w" AND "w w')
     False
     """
     qcounter = 0
@@ -155,18 +155,18 @@ def quotation_marks(input_string):
         return True
 
 
-def exact_phrase_operators(input_string):
+def operators_within_exact_phrase(input_string):
     """
     This function checks if there are any operators within quotation marks.
     :param input_string: raw input string.
     :return: Boolean.
-    >>> exact_phrase_operators('w AND w OR "w w w" NOT "w w"')
+    >>> operators_within_exact_phrase('w AND w OR "w w w" NOT "w w"')
     True
-    >>> exact_phrase_operators('w AND w OR "w NOT w"')
+    >>> operators_within_exact_phrase('w AND w OR "w NOT w"')
     False
-    >>> exact_phrase_operators('w AND w OR "w WITHIN345 w"')
+    >>> operators_within_exact_phrase('w AND w OR "w WITHIN345 w"')
     False
-    >>> exact_phrase_operators('"w NOT w" OR w NOT w')
+    >>> operators_within_exact_phrase('"w NOT w" OR w NOT w')
     False
     """
     # incomplete
@@ -190,27 +190,27 @@ def exact_phrase_operators(input_string):
     return True
 
 
-def distance_number(input_string):
+def distance_must_be_between_1_and_999(input_string):
     """
     This function checks whether the NEAR and WITHIN operators have a distance specified.
     The distance is only legal if it is between 1 and 999.
     :param input_string: raw input string.
     :return: Boolean.
-    >>> distance_number('w AND w WITHIN34 w OR w')
+    >>> distance_must_be_between_1_and_999('w AND w WITHIN34 w OR w')
     True
-    >>> distance_number('w OR w NEAR999 w')
+    >>> distance_must_be_between_1_and_999('w OR w NEAR999 w')
     True
-    >>> distance_number('w AND w WITHIN w OR w')
+    >>> distance_must_be_between_1_and_999('w AND w WITHIN w OR w')
     False
-    >>> distance_number('w OR w NEAR w OR w')
+    >>> distance_must_be_between_1_and_999('w OR w NEAR w OR w')
     False
-    >>> distance_number('w AND w WITHIN1234 w OR w')
+    >>> distance_must_be_between_1_and_999('w AND w WITHIN1234 w OR w')
     False
-    >>> distance_number('w OR w NEAR1234 w OR w')
+    >>> distance_must_be_between_1_and_999('w OR w NEAR1234 w OR w')
     False
-    >>> distance_number('w AND w WITHIN0 w OR w')
+    >>> distance_must_be_between_1_and_999('w AND w WITHIN0 w OR w')
     False
-    >>> distance_number('w AND w NEAR0 w OR w')
+    >>> distance_must_be_between_1_and_999('w AND w NEAR0 w OR w')
     False
     """
     dist_re = re.compile(r'(NEAR|WITHIN)(0|\D|\d{4,})')
@@ -226,7 +226,24 @@ def run(input_string):
     :param input_string: Raw input string from search box.
     :return: Error message.
     """
-    pass
+    funclist =[query_is_empty,
+               parentheses_are_uneven,
+               operators_with_no_words_in_between,
+               operator_following_opening_parenthesis_or_before_closing_parenthesis,
+               quotation_marks_are_uneven,
+               operators_within_exact_phrase,
+               distance_must_be_between_1_and_999]
+    errorcount = 0
+    errorlist = []
+    for func in funclist:
+        if func(input_string) is False:
+            errorcount += 1
+            errorlist.append("Error: {}".format(func.__name__))
+    if errorcount != 0:
+        return "{} Errors found.".format(errorcount), errorlist
+    else:
+        return True, []
+
 
 if __name__ == '__main__':
     doctest.testmod()
