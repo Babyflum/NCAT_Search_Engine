@@ -4,15 +4,33 @@ Illegal queries include:
 - Parentheses that were opened were not closed. (u"\u2713")
 - Two or more operators next to each other with no search word in between. (u"\u2713")
 - Operators right of opening parentheses. (w1 AND(w1..)) works but (w1 (AND w2)..) does not. (u"\u2713")
-- Search tokens left of closing parentheses.
+- Search tokens left of closing parentheses. (for now empty spaces will be treated as AND).
 - Exact phrase quotation marks open but do not close. (u"\u2713")
-- Operators within an exact phrase (this might be updated in later versions).
-- WITHIN and NEAR operators without a distance number or with a distance number of more than 3 digits.
-- Empty query.
+- Operators within an exact phrase (this might be updated in later versions). (u"\u2713")
+- WITHIN and NEAR operators without a distance number or with a distance number of more than 3 digits. (u"\u2713")
+- Empty query. (u"\u2713")
 """
 
 import re
 import doctest
+
+
+def empty_query(input_string):
+    """
+    This function checks whether the query is empty.
+    :param input_string: raw input string.
+    :return: Boolean.
+    >>> empty_query('w AND w')
+    True
+    >>> empty_query('')
+    False
+    >>> empty_query('  ')
+    False
+    """
+    if re.match(r'\A\s*\Z', input_string) is None:
+        return True
+    else:
+        return False
 
 
 def check_parentheses(input_string):
@@ -87,35 +105,35 @@ def operator_parentheses(input_string):
         return False
 
 
-def word_parentheses(input_string):
-    """
-    This function checks if a search token or an exact phrase directly precedes an opening parenthesis
-    or if a search token is directly followed by a closing parenthesis.
-    :param input_string: raw input string.
-    :return: Boolean
-    >>> word_parentheses('w OR ( w AND w)')
-    True
-    >>> word_parentheses('w OR w ( w AND w)')
-    False
-    >>> word_parentheses('w OR w (w AND w)')
-    False
-    >>> word_parentheses('w OR ( w AND w) w')
-    False
-    >>> word_parentheses('w OR w ( w AND w)w')
-    False
-    """
-    # incomplete
-    input_string = '  ' + input_string + '  '
-    op_re1 = r'((?<!AND)(?<!OR)(?<!NOT)(?<!NEAR\d)(?<!NEAR\d\d)' \
-             r'(?<!NEAR\d\d\d)(?<!WITHIN\d)(?<!WITHIN\d\d)(?<!WITHIN\d\d\d)(?<!\s\s))'
-    op_re2 = r'((?!AND)(?!OR)(?!NOT)(?!NEAR\d)(?!NEAR\d\d)' \
-             r'(?!NEAR\d\d\d)(?!WITHIN\d)(?!WITHIN\d\d)(?!WITHIN\d\d\d)(?!\s\s))'
-    wopa_re = re.compile('%s\s*\(|\)\s*%s' % (op_re1, op_re2))
-    if re.search(wopa_re, input_string) is None:
-        return True
-    else:
-        return False
-
+# def word_parentheses(input_string):
+#     """
+#     This function checks if a search token or an exact phrase directly precedes an opening parenthesis
+#     or if a search token is directly followed by a closing parenthesis.
+#     :param input_string: raw input string.
+#     :return: Boolean
+#     >>> word_parentheses('w OR ( w AND w)')
+#     True
+#     >>> word_parentheses('w OR w ( w AND w)')
+#     False
+#     >>> word_parentheses('w OR w (w AND w)')
+#     False
+#     >>> word_parentheses('w OR ( w AND w) w')
+#     False
+#     >>> word_parentheses('w OR w ( w AND w)w')
+#     False
+#     """
+#     # incomplete
+#     # input_string = '  ' + input_string + '  '
+#     # op_re1 = r'((?<!AND)(?<!OR)(?<!NOT)(?<!NEAR\d)(?<!NEAR\d\d)' \
+#     #          r'(?<!NEAR\d\d\d)(?<!WITHIN\d)(?<!WITHIN\d\d)(?<!WITHIN\d\d\d)(?<!\s\s))'
+#     # op_re2 = r'((?!AND)(?!OR)(?!NOT)(?!NEAR\d)(?!NEAR\d\d)' \
+#     #          r'(?!NEAR\d\d\d)(?!WITHIN\d)(?!WITHIN\d\d)(?!WITHIN\d\d\d)(?!\s\s))'
+#     # wopa_re = re.compile('%s\s*\(|\)\s*%s' % (op_re1, op_re2))
+#     # if re.search(wopa_re, input_string) is None:
+#     #     return True
+#     # else:
+#     #     return False
+#     pass
 
 def quotation_marks(input_string):
     """
@@ -148,13 +166,57 @@ def exact_phrase_operators(input_string):
     False
     >>> exact_phrase_operators('w AND w OR "w WITHIN345 w"')
     False
+    >>> exact_phrase_operators('"w NOT w" OR w NOT w')
+    False
     """
+    # incomplete
     op_re1 = r'\&|\||AND|OR|BUT\sNOT|NOT|\~|\,|NEAR\d{1,3}|WITHIN\d{1,3}'
-    regex = re.compile(r'(".*(\&|\||AND|OR|BUT\sNOT|NOT|\~|\,|NEAR\d{1,3}|WITHIN\d{1,3}).*")*?')
-    if re.search(regex, input_string) is None:
+    qcount = 0
+    strcount = 0
+    opqu = 0
+    clqu = 0
+    for char in input_string:
+        if char == '"':
+            if qcount == 1:
+                clqu = strcount
+                qcount -= 1
+            else:
+                qcount += 1
+                opqu = strcount
+        if qcount == 0 and strcount != 0:
+            if re.search(op_re1, input_string[opqu+1:clqu]) is not None:
+                return False
+        strcount += 1
+    return True
+
+
+def distance_number(input_string):
+    """
+    This function checks whether the NEAR and WITHIN operators have a distance specified.
+    The distance is only legal if it is between 1 and 999.
+    :param input_string: raw input string.
+    :return: Boolean.
+    >>> distance_number('w AND w WITHIN34 w OR w')
+    True
+    >>> distance_number('w OR w NEAR999 w')
+    True
+    >>> distance_number('w AND w WITHIN w OR w')
+    False
+    >>> distance_number('w OR w NEAR w OR w')
+    False
+    >>> distance_number('w AND w WITHIN1234 w OR w')
+    False
+    >>> distance_number('w OR w NEAR1234 w OR w')
+    False
+    >>> distance_number('w AND w WITHIN0 w OR w')
+    False
+    >>> distance_number('w AND w NEAR0 w OR w')
+    False
+    """
+    dist_re = re.compile(r'(NEAR|WITHIN)(0|\D|\d{4,})')
+    if re.search(dist_re, input_string) is None:
         return True
     else:
-        print(re.search(regex, input_string))
         return False
 
 
