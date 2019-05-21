@@ -2,6 +2,7 @@ import preprocessor
 import searcher
 import pickle
 from parse_tree import ParseTree
+import error_catcher
 # import statistics_container as stat
 # import time
 from pprint import pprint
@@ -32,6 +33,10 @@ def run_main(query, ii):
     :return: List of DocID tuples with list of positions (ID, [pos1, pos2,...]).
     """
     query = query.strip()
+    eval, elist = error_catcher.run(query)
+    if eval != True:
+        print(eval, elist)
+        return None
     if re.match(r'\b\w+\b$', query):
         stats = dict()
         stats[query] = dict()
