@@ -7,6 +7,7 @@ and outputs a list of document IDs that fit the criteria.
 from parse_tree import ParseTree
 import re
 from pprint import pprint
+import postings
 
 operators = ['AND', 'OR', 'BUT NOT']
 stats = dict()
@@ -208,7 +209,7 @@ def exact_phrase(query, ii):
     within a given document.
     """
     try:
-        result = ii[query[0]]
+        result = postings.retrieve(query[0], ii[query[0]])
     except KeyError as w:
         print("{} cannot be found".format(w))
         return [], {}
@@ -217,7 +218,8 @@ def exact_phrase(query, ii):
         # empty is only necessary because of how the intersect function creates
         # a string for the statistics container
         try:
-            result, empty = intersect(result, ii[word], "", "", exact=True)
+            ii_word = postings.retrieve(word, ii[word])
+            result, empty = intersect(result, ii_word, "", "", exact=True)
         except KeyError as w:
             print("{} cannot be found".format(w))
             return [], {}
@@ -227,12 +229,14 @@ def exact_phrase(query, ii):
     final_result = []
     for ID in result:
         # returns position list of word in given ID
-        for num in ii[query[0]][[w[0] for w in ii[query[0]]].index(ID)][1]:
+        ii_query0 = postings.retrieve(query[0], ii[query[0]])
+        for num in ii_query0[[w[0] for w in ii_query0].index(ID)][1]:
             match = True
             i = 1
             # check if the words in query have positions right after one another
             while match and i < len(query):
-                if num + i in ii[query[i]][[w[0] for w in ii[query[i]]].index(ID)][1]:
+                ii_queryi = postings.retrieve(query[i], ii[query[i]])
+                if num + i in ii_queryi[[w[0] for w in ii_queryi].index(ID)][1]:
                     i += 1
                 else:
                     match = False
@@ -393,9 +397,10 @@ def run(current, ii):
             return exact_phrase(query_list, ii)
         else:
             try:
+                postings_list = postings.retrieve(current.key, ii[current.key])
                 stats[current.key] = dict()
-                stats[current.key]["results"] = ii[current.key]
-                return ii[current.key], current.key
+                stats[current.key]["results"] = postings_list
+                return postings_list, current.key
             except KeyError as w:
                 print("{} cannot be found".format(w))
                 return [], current.key
